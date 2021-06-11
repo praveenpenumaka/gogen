@@ -1,0 +1,68 @@
+package main
+
+import (
+	"github.com/urfave/cli"
+	"{{- Basepath -}}/appcontext"
+	"{{- Basepath -}}/config"
+{{ if .AppContext.HasDB }}
+	"{{- Basepath -}}/models"
+{{ end }}
+	"log"
+	"os"
+	"{{- Basepath -}}/server"
+)
+
+
+{{ if .AppContext.HasDB }}
+func MigrateDB()  {
+	config := config.InitConfig()
+	appContext := context.InitAppContext(config)
+	appContext.DB.AutoMigrate(
+	    {{- range $i,$model := .Models -}}
+    	    &models.{{ $model.Name | ToCap }}{},
+    	{{- end -}}
+	    )
+}
+{{ end }}
+
+func InitServer()  {
+	config := config.InitConfig()
+	appContext := context.InitAppContext(config)
+	router := server.SetupRouter(appContext)
+	router.Run()
+}
+
+
+func main(){
+	app := &cli.App{
+		Name:    "{{ .Project.Name }}",
+		Version: "{{ .Project.Version }}",
+		Commands: []*cli.Command{
+            {{ if .AppContext.HasDB }}
+			{
+				Name:    "migrate",
+				Aliases: []string{"m"},
+				Usage:   "migrate database",
+				Action:  func(c *cli.Context) error {
+					MigrateDB()
+					return nil
+				},
+			},
+			{{ end }}
+			{
+				Name:    "api",
+				Aliases: []string{"a"},
+				Usage:   "start api server",
+				Action:  func(c *cli.Context) error {
+					InitServer()
+					return nil
+				},
+			},
+		},
+	}
+
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Fatal(err)
+	}
+}

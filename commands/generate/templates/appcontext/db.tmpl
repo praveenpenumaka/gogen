@@ -1,0 +1,12 @@
+package context
+
+import (
+	"{{ Basepath }}/config"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+)
+
+func InitDB(config config.Config) *gorm.DB{
+	db, _ := gorm.Open(postgres.Open(config.DBConfig.GetDSN()), &gorm.Config{})
+	return db
+}

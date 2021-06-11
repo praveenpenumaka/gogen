@@ -1,0 +1,14 @@
+package models
+
+import  "gorm.io/gorm"
+
+type {{ .Name | ToCap }} struct {
+	gorm.Model
+	{{ range $i,$param := .Params }}
+    {{- $param.Name | ToCap }} {{ $param.Type }}   `json:"{{ $param.Name | ToLowerCase }}" {{ if $param.Required }} binding:"required" {{ end }} {{$param.Labels}}`
+	{{ end }}
+}
+
+func (m *{{ .Name | ToCap }})Valid() bool {
+	return !(m.ID <= 0)
+}

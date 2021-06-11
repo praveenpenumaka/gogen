@@ -1,0 +1,19 @@
+package context
+
+import (
+	"{{- Basepath -}}/config"
+)
+
+type AppContext struct {
+	{{- range $i,$subcontext := .AppContext.Subcontexts }}
+        {{ $subcontext.Name | ToCap }} {{ $subcontext.Type }}
+	{{- end }}
+}
+
+func InitAppContext(config config.Config)  AppContext {
+	return AppContext{
+	{{- range $i,$subcontext := .AppContext.Subcontexts }}
+        {{ $subcontext.Name }}: Init{{ $subcontext.Name | ToCap }}(config),
+	{{- end }}
+	}
+}

@@ -1,0 +1,138 @@
+package controllers
+
+import (
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+	"net/http"
+	"{{ Basepath }}/models"
+	"strconv"
+)
+
+type {{ .Name | ToCap }}Controller struct {
+	DB *gorm.DB
+}
+
+func (base *{{ .Name | ToCap }}Controller) Create{{ .Name | ToCap }}(c *gin.Context) {
+	obj := new(models.{{ .Name | ToCap }})
+	if err := c.ShouldBindJSON(&obj); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid {{ .Name }} values"})
+		return
+	}
+	tx := base.DB.Create(&obj)
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": tx.Error})
+		return
+	}
+	if tx.RowsAffected == 0 {
+		c.JSON(http.StatusInternalServerError, "Unable to add {{ .Name }}")
+	}
+
+	c.JSON(http.StatusOK, obj)
+}
+
+func (base *{{ .Name | ToCap }}Controller) CreateBulk{{ .Name | ToCap }}s(c *gin.Context) {
+	obj := new([]models.{{ .Name | ToCap }})
+	if err := c.ShouldBindJSON(&obj); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid {{ .Name }}s values"})
+		return
+	}
+	tx := base.DB.Create(obj)
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": tx.Error})
+		return
+	}
+
+	c.JSON(http.StatusOK, obj)
+}
+
+func (base *{{ .Name | ToCap }}Controller) Update{{ .Name | ToCap }}s(c *gin.Context) {
+	id, exists := c.Params.Get("id")
+	if !exists {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id is missing"})
+		return
+	}
+	uid, err := strconv.ParseUint(id, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id provided"})
+		return
+	}
+	obj := new(models.{{ .Name | ToCap }})
+	if err := c.ShouldBindJSON(&obj); err != nil {
+		return
+	}
+	obj.ID = uint(uid)
+	tx := base.DB.Model(&obj).Updates(&obj).Find(&obj)
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": tx.Error})
+		return
+	}
+	if tx.RowsAffected == 0 {
+		c.JSON(http.StatusOK, "No {{ .Name }} found")
+		return
+	}
+	c.JSON(http.StatusOK, obj)
+}
+
+func (base *{{ .Name | ToCap }}Controller) Get{{ .Name | ToCap }}(c *gin.Context) {
+	id, exists := c.Params.Get("id")
+	if !exists {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id is missing"})
+		return
+	}
+	uid, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "value of id is invalid"})
+		return
+	}
+	obj := new(models.{{ .Name | ToCap }})
+	tx := base.DB.Model(&models.{{ .Name | ToCap }}{}).Where("id = ?",uint(uid)).Find(&obj)
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": tx.Error})
+		return
+	}
+	if tx.RowsAffected == 0 {
+		c.JSON(http.StatusOK, "No {{ .Name }} found")
+		return
+	}
+
+	c.JSON(http.StatusOK, obj)
+}
+
+func (base *{{ .Name | ToCap }}Controller) List{{ .Name | ToCap }}s(c *gin.Context) {
+	query := new(models.{{ .Name | ToCap }})
+	obj := new([]models.{{ .Name | ToCap }})
+	tx := base.DB.Model(&models.{{ .Name | ToCap }}{}).Where(query).Find(&obj)
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": tx.Error})
+		return
+	}
+	if tx.RowsAffected == 0 {
+		c.JSON(http.StatusOK, "No {{ .Name }}s found")
+		return
+	}
+	c.JSON(http.StatusOK, obj)
+}
+
+func (base *{{ .Name | ToCap }}Controller) Delete{{ .Name | ToCap }}(c *gin.Context) {
+	id, exists := c.Params.Get("id")
+	if !exists {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id is missing"})
+		return
+	}
+	uid, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "value of id is invalid"})
+		return
+	}
+	query := models.{{ .Name | ToCap }}{Model: gorm.Model{ID: uint(uid)}} // TODO: Soft delete {{ .Name }}
+	tx := base.DB.Where(&query).Delete(&query)
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": tx.Error})
+		return
+	}
+	if tx.RowsAffected == 0 {
+		c.JSON(http.StatusOK, "No {{ .Name }} found")
+		return
+	}
+	c.JSON(http.StatusOK, query)
+}

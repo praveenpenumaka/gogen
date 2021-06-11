@@ -1,0 +1,46 @@
+package config
+
+import (
+	"github.com/joho/godotenv"
+	"os"
+)
+
+type Config struct {
+    {{- range $index,$config := .Configs -}}
+        {{ $config.Name | ToCap }}Config {{ $config.Name | ToCap }}Config
+    {{- end -}}
+}
+
+func InitConfig() Config {
+	godotenv.Load()
+	return Config{
+        {{- range $index,$config := .Configs -}}
+            {{ $config.Name | ToCap }}Config: Init{{ $config.Name | ToCap}}Config(),
+        {{- end -}}
+	}
+}
+
+
+// Config utilities
+
+func GetStringOrPanic(key string) string {
+	if key == "" {
+		return ""
+	}
+	value := os.Getenv(key)
+	if value == "" {
+		panic("unable to find config key " + key)
+	}
+	return value
+}
+
+func GetString(key string, defaultValue string) string {
+	if key == "" {
+		return ""
+	}
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+	return value
+}

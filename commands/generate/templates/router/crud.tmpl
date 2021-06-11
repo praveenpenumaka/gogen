@@ -1,0 +1,21 @@
+package server
+
+import (
+	"{{ Basepath }}/appcontext"
+	"{{ Basepath }}/controllers"
+	"github.com/gin-gonic/gin"
+)
+
+func {{ .Name | ToCap }}CrudSetup(router *gin.Engine,ctx context.AppContext) *gin.Engine{
+	controller := controllers.{{ .Name | ToCap }}Controller{DB:ctx.DB}
+	crud := router.Group("/{{ .Name }}s")
+	{
+		crud.GET("/",controller.List{{ .Name | ToCap }}s)
+		crud.POST("/new",controller.Create{{ .Name | ToCap }})
+		crud.POST("/bulk-new",controller.CreateBulk{{ .Name | ToCap }}s)
+		crud.PUT("/:id/update",controller.Update{{ .Name | ToCap }}s)
+		crud.GET("/:id",controller.Get{{ .Name | ToCap }})
+		crud.DELETE("/:id/delete",controller.Delete{{ .Name | ToCap }})
+	}
+	return router
+}

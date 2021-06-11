@@ -1,0 +1,21 @@
+package server
+
+import (
+	"{{ Basepath }}/appcontext"
+	"{{ Basepath }}/controllers"
+	"github.com/gin-gonic/gin"
+)
+
+func {{ .Name | ToCap }}UploadSetup(router *gin.Engine,ctx context.AppContext) *gin.Engine{
+	router.POST("/upload/{{ .Name }}",func(c *gin.Context) {
+        // single file
+        file, _ := c.FormFile("file")
+        log.Println(file.Filename)
+
+        // Upload the file to specific dst.
+        c.SaveUploadedFile(file, {{ .Directory }})
+
+        c.String(http.StatusOK, fmt.Sprintf("'%s' uploaded!", file.Filename))
+    })
+	return router
+}

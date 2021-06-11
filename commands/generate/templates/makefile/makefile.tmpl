@@ -1,0 +1,18 @@
+once:
+{{"\t"}}go mod init
+{{"\t"}}go mod tidy
+
+migrate:
+{{"\t"}}go run main.go migrate
+
+clean:
+{{"\t"}}rm out/{{ .Project.Name }}
+
+build:
+{{"\t"}}go build -o out/{{ .Project.Name }}
+
+install:
+{{"\t"}}go install
+
+run-api:
+{{"\t"}}go run main.go api

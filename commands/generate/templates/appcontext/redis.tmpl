@@ -1,0 +1,17 @@
+package context
+
+import (
+	"fmt"
+	"{{- Basepath -}}/config"
+	"github.com/go-redis/redis/v8"
+)
+
+func InitRedis(config config.Config) *redis.Client{
+	Addr:=fmt.Sprintf("%s:%d",config.RedisConfig.Host,config.RedisConfig.Port)
+	return redis.NewClient(&redis.Options{
+		Addr:               Addr,
+		Username:           config.RedisConfig.Username,
+		Password:           config.RedisConfig.Password,
+		DB:                 0,
+	})
+}

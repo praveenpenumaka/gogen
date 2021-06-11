@@ -1,0 +1,17 @@
+package server
+
+import (
+	"github.com/gin-gonic/gin"
+	"{{ Basepath }}/appcontext"
+)
+
+func SetupRouter(context context.AppContext) *gin.Engine {
+	router := gin.New()
+	router.Use(gin.Logger())
+	router.Use(gin.Recovery())
+    {{- range $i,$v := .Router.Cruds }}
+        router = {{- $v.Name | ToCap -}}CrudSetup(router,context)
+    {{- end }}
+
+	return router
+}
