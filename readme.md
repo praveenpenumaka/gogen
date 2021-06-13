@@ -4,6 +4,7 @@ Scaffolding for go based services
 
 # TODO
 
+* Readme
 * ~~Config~~
     - ~~send basepath as argument~~
 * ~~AppContext~~
