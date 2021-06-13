@@ -1,14 +1,11 @@
 package appcontext
 
 import (
-	"bytes"
 	_ "embed"
-	"errors"
-	"fmt"
 	"github.com/gogen/domain"
-	"github.com/gogen/utils"
+	"github.com/gogen/services"
+	"log"
 	"strings"
-	"text/template"
 )
 
 var (
@@ -22,81 +19,62 @@ var (
 	redisTemplateString string
 )
 
-func getTemplate(basepath string) (*template.Template, error) {
-	return template.New("appcontext").Funcs(template.FuncMap{
-		"ToCap":    utils.ToCap,
-		"Basepath": func(args ...string) string { return basepath },
-	}).Parse(appContextTemplateString)
+// GenerateAppContext accepts whole app configuration
+func GenerateAppContext(basepath string, config domain.Application) error {
+	g := services.Generator{
+		Basepath:   basepath,
+		ModulePath: "appcontext",
+		Template:   appContextTemplateString,
+		Data:       config,
+		FileName:   "appcontext.go",
+	}
+	return g.Generate()
 }
 
-// GetAppContext accepts whole app configuration
-func GetAppContext(basepath string, config domain.Application) (string, string, error) {
-	tmpl, parseErr := getTemplate(basepath)
-	if parseErr != nil {
-		return "", "", parseErr
-	}
-
-	bs := bytes.NewBufferString("")
-	err := tmpl.Execute(bs, config)
-	if err != nil {
-		return "", "", err
-	}
-	return "appcontext/appcontext.go", bs.String(), nil
-}
-
-func getSubTemplate(basepath string, name string) (*template.Template, error) {
-	var tmplS string
+func getSubTemplate(name string) string {
 	name = strings.ToLower(name)
 	if name == "db" {
-		tmplS = dbTemplateString
+		return dbTemplateString
 	} else if name == "redis" {
-		tmplS = redisTemplateString
+		return redisTemplateString
 	} else if name == "config" {
-		tmplS = configTemplateString
-	} else {
-		return nil, errors.New("invalid app context type:" + name)
+		return configTemplateString
 	}
-	return template.New("context").Funcs(template.FuncMap{
-		"ToCap":    utils.ToCap,
-		"Basepath": func(args ...string) string { return basepath },
-	}).Parse(tmplS)
+
+	panic("invalid app context type")
+	return ""
 }
 
-func GetSubContexts(basepath string, subconfig domain.Context) (string, string, error) {
-	tmpl, parseErr := getSubTemplate(basepath, subconfig.Name)
-	if parseErr != nil {
-		return "", "", parseErr
+func GenerateSubContext(basepath string, subconfig domain.Context) error {
+	tmpl := getSubTemplate(subconfig.Type)
+	log.Println("generating sub context " + subconfig.Name)
+	g := services.Generator{
+		Basepath:   basepath,
+		ModulePath: "appcontext",
+		Template:   tmpl,
+		Data:       subconfig,
+		FileName:   subconfig.Name,
 	}
-
-	bs := bytes.NewBufferString("")
-	err := tmpl.Execute(bs, subconfig)
-	if err != nil {
-		return "", "", err
-	}
-	filePath := fmt.Sprintf("appcontext/%s.go", subconfig.Name)
-	return filePath, bs.String(), nil
+	return g.Generate()
 }
 
-// GetAppContext accepts whole app configuration
-func GetAll(basepath string, config domain.Application) (map[string]string, error) {
-	all := make(map[string]string)
+// GenerateAppContext accepts whole app configuration
+func Generate(basepath string, config domain.Application) (error error) {
 	appContextConfig := config.AppContext
-	configPath, configContent, err := GetAppContext(basepath, config)
+	err := GenerateAppContext(basepath, config)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	all[configPath] = configContent
 
 	if len(appContextConfig.Subcontexts) <= 0 {
-		return all, nil
+		return nil
 	}
 	subConfigs := appContextConfig.Subcontexts
 	for _, subconfig := range subConfigs {
-		sConfigPath, sConfigContent, sErr := GetSubContexts(basepath, subconfig)
+		sErr := GenerateSubContext(basepath, subconfig)
 		if sErr != nil {
-			return nil, sErr
+			error = sErr
 		}
-		all[sConfigPath] = sConfigContent
 	}
-	return all, nil
+	return
 }

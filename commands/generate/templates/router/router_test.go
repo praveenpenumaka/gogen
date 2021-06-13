@@ -48,7 +48,7 @@ func TestGetAll(t *testing.T) {
 	var configs map[string]interface{}
 	json.Unmarshal([]byte(jsonString), &configs)
 
-	resources, err := GetAll("github.com/gogen", configs)
+	resources, err := Generate("github.com/gogen", configs)
 	assert.Nil(t, err)
 	assert.NotNil(t, resources)
 	_, found1 := resources["server/router.go"]

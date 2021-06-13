@@ -1,83 +1,21 @@
 package add
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/gogen/domain"
-	"io/ioutil"
-	"os"
-	"text/template"
+	"github.com/gogen/services"
 )
-
-const initData = `{
-	"project":{
-		"name": "{{ .Name }}",
-		"version": "0.0.1",
-		"basepath": " {{ .BasePath }}"
-	},
-	"models": [],
-	"configs": [],
-	"appcontext": {},
-	"controllers": [],
-	"router": {}
-}`
-
-func Project(basePath, name string) error {
-	finalPath := fmt.Sprintf("%s/%s", basePath, name)
-	direrr := os.Mkdir(finalPath, 0755)
-	if direrr != nil {
-		return direrr
-	}
-	projectMeta := fmt.Sprintf("%s/project.json", finalPath)
-
-	tmpl, parseErr := template.New("projectmeta").Parse(initData)
-	if parseErr != nil {
-		return parseErr
-	}
-
-	bs := bytes.NewBufferString("")
-	m := make(map[string]string)
-	m["Name"] = name
-	err := tmpl.Execute(bs, m)
-	if err != nil {
-		return nil
-	}
-	fmt.Println("Creating meta file at :" + projectMeta)
-	return ioutil.WriteFile(projectMeta, bs.Bytes(), 0755)
-}
-
-func getProjectConfig(basepath string) (*domain.Application, error) {
-	projectFile := fmt.Sprintf("%s/project.json", basepath)
-	project, err := ioutil.ReadFile(projectFile)
-	if err != nil {
-		return nil, err
-	}
-	m := &domain.Application{}
-	json.Unmarshal(project, m)
-	return m, nil
-}
-
-func writeProjectConfig(basepath string, m *domain.Application) error {
-	projectFile := fmt.Sprintf("%s/project.json", basepath)
-	bs, e := json.MarshalIndent(m, "", " ")
-	if e != nil {
-		return e
-	}
-	return ioutil.WriteFile(projectFile, bs, 0755)
-}
 
 func Model(basePath, name string, params map[string]string) error {
 
-	m, err := getProjectConfig(basePath)
+	m, err := services.GetProjectConfig(basePath)
 	if err != nil {
 		return err
 	}
 
 	for _, model := range m.Models {
 		if model.Name == name {
-			return errors.New("model already exists")
+			return errors.New("model already exists, regenerate for generating code")
 		}
 	}
 	var paramList []domain.ModelParam
@@ -96,11 +34,11 @@ func Model(basePath, name string, params map[string]string) error {
 
 	m.AddModel(&newModel)
 
-	return writeProjectConfig(basePath, m)
+	return services.WriteProjectConfig(basePath, m)
 }
 
 func CRUD(basePath, model string) error {
-	m, err := getProjectConfig(basePath)
+	m, err := services.GetProjectConfig(basePath)
 	if err != nil {
 		return err
 	}
@@ -114,11 +52,11 @@ func CRUD(basePath, model string) error {
 
 	m.AddCrud(&newCrud)
 
-	return writeProjectConfig(basePath, m)
+	return services.WriteProjectConfig(basePath, m)
 }
 
 func AppContext(basepath, name, ntype string) error {
-	m, err := getProjectConfig(basepath)
+	m, err := services.GetProjectConfig(basepath)
 	if err != nil {
 		return err
 	}
@@ -134,11 +72,11 @@ func AppContext(basepath, name, ntype string) error {
 	}
 	m.AddContext(&c)
 
-	return writeProjectConfig(basepath, m)
+	return services.WriteProjectConfig(basepath, m)
 }
 
 func Controller(basePath, model string) error {
-	m, err := getProjectConfig(basePath)
+	m, err := services.GetProjectConfig(basePath)
 	if err != nil {
 		return err
 	}
@@ -152,11 +90,11 @@ func Controller(basePath, model string) error {
 
 	m.AddController(&newController)
 
-	return writeProjectConfig(basePath, m)
+	return services.WriteProjectConfig(basePath, m)
 }
 
 func AuthController(basePath string) error {
-	m, err := getProjectConfig(basePath)
+	m, err := services.GetProjectConfig(basePath)
 	if err != nil {
 		return err
 	}
@@ -171,11 +109,11 @@ func AuthController(basePath string) error {
 
 	m.AddController(&newController)
 
-	return writeProjectConfig(basePath, m)
+	return services.WriteProjectConfig(basePath, m)
 }
 
 func Config(basePath, model string, params map[string]string) error {
-	m, err := getProjectConfig(basePath)
+	m, err := services.GetProjectConfig(basePath)
 	if err != nil {
 		return err
 	}
@@ -202,6 +140,6 @@ func Config(basePath, model string, params map[string]string) error {
 
 	m.AddConfig(&newConfig)
 
-	return writeProjectConfig(basePath, m)
+	return services.WriteProjectConfig(basePath, m)
 
 }

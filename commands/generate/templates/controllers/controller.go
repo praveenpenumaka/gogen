@@ -1,13 +1,11 @@
 package controllers
 
 import (
-	"bytes"
 	_ "embed"
 	"fmt"
 	"github.com/gogen/domain"
-	"github.com/gogen/utils"
+	"github.com/gogen/services"
 	"strings"
-	"text/template"
 )
 
 var (
@@ -18,46 +16,30 @@ var (
 	authControllerTemplateString string
 )
 
-func GetAll(basepath string, config domain.Application) (map[string]string, error) {
-	all := make(map[string]string)
-	controllerList := config.Controllers
-
-	authtmpl, parseErr := template.New("authcontroller").Funcs(template.FuncMap{
-		"ToCap":       utils.ToCap,
-		"ToLowerCase": strings.ToLower,
-		"Basepath":    func(args ...string) string { return basepath },
-	}).Parse(authControllerTemplateString)
-	if parseErr != nil {
-		return nil, parseErr
+func getTemplate(subtype string) string {
+	if subtype == "auth" {
+		return authControllerTemplateString
 	}
+	return controllerTemplateString
+}
 
-	tmpl, parseErr := template.New("controller").Funcs(template.FuncMap{
-		"ToCap":       utils.ToCap,
-		"ToLowerCase": strings.ToLower,
-		"Basepath":    func(args ...string) string { return basepath },
-	}).Parse(controllerTemplateString)
-	if parseErr != nil {
-		return nil, parseErr
-	}
+func Generate(basepath string, config domain.Application) (error error) {
 
-	for _, model := range controllerList {
-		if !model.DoNotOverwrite {
-			bs := bytes.NewBufferString("")
-			m := model
-			if model.Ctype == "auth" {
-				err := authtmpl.Execute(bs, "")
-				if err == nil {
-					all["controllers/auth.go"] = bs.String()
-				}
-			} else {
-				err := tmpl.Execute(bs, m)
-				if err == nil {
-					filePath := fmt.Sprintf("controllers/%s.go", strings.ToLower(m.Name))
-					all[filePath] = bs.String()
-				}
+	for _, controller := range config.Controllers {
+		if !controller.DoNotOverwrite {
+			g := services.Generator{
+				Basepath:   basepath,
+				ModulePath: "controllers",
+				Template:   getTemplate(controller.Ctype),
+				Data:       controller,
+				FileName:   fmt.Sprintf("%s.go", strings.ToLower(controller.Name)),
+			}
+			err := g.Generate()
+			if err != nil {
+				error = err
 			}
 		}
 	}
 
-	return all, nil
+	return
 }

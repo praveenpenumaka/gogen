@@ -9,6 +9,24 @@ type Application struct {
 	Controllers []Controller `json:"controllers"`
 	Configs     []Config     `json:"configs"`
 	AppContext  AppContext   `json:"appcontext"`
+	Mainfile    bool         `json:"mainfile"`
+	Makefile    bool         `json:"makefile"`
+	Envfile     bool         `json:"envfile"`
+}
+
+// Componenets to be rendered
+func (a *Application) GetComponents() []string {
+	return []string{
+		// "project",
+		"models",
+		"router",
+		"controllers",
+		"configs",
+		"appcontext",
+		"main",
+		"makefile",
+		".env.sample",
+	}
 }
 
 func (a *Application) AddModel(m *Model) error {

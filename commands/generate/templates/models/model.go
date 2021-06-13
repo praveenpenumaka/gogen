@@ -1,13 +1,11 @@
 package models
 
 import (
-	"bytes"
 	_ "embed"
 	"fmt"
 	"github.com/gogen/domain"
-	"github.com/gogen/utils"
+	"github.com/gogen/services"
 	"strings"
-	"text/template"
 )
 
 var (
@@ -15,32 +13,20 @@ var (
 	modelTemplateString string
 )
 
+func Generate(basepath string, config domain.Application) (error error) {
 
-func GenerateModels(basepath string, config domain.Application) (map[string]string, error) {
-
-	all := make(map[string]string)
-	modelsList := config.Models
-
-	tmpl, parseErr := template.New("config").Funcs(template.FuncMap{
-		"ToCap": utils.ToCap,
-		"ToLowerCase": strings.ToLower,
-		"Basepath": func(arg0 string, args ...string) string { return basepath },
-	}).Parse(modelTemplateString)
-	if parseErr != nil {
-		return nil, parseErr
-	}
-	for _, model := range modelsList {
-		fmt.Println(model)
-		bs := bytes.NewBufferString("")
-		m := model
-		err := tmpl.Execute(bs, m)
-		if err != nil {
-			return nil, err
+	for _, model := range config.Models {
+		g := services.Generator{
+			Basepath:   basepath,
+			Template:   modelTemplateString,
+			Data:       model,
+			ModulePath: "models",
+			FileName:   fmt.Sprintf("%s.go", strings.ToLower(model.Name)),
 		}
-		// TODO: Should an error block the whole generation?
-		filePath := fmt.Sprintf("models/%s.go", strings.ToLower(m.Name))
-		all[filePath] = bs.String()
+		err := g.Generate()
+		if err != nil {
+			error = err
+		}
 	}
-
-	return all, nil
+	return
 }

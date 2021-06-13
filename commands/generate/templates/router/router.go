@@ -1,13 +1,11 @@
 package router
 
 import (
-	"bytes"
 	_ "embed"
 	"fmt"
 	"github.com/gogen/domain"
-	"github.com/gogen/utils"
+	"github.com/gogen/services"
 	"strings"
-	"text/template"
 )
 
 var (
@@ -17,58 +15,46 @@ var (
 	routerTemplateString string
 )
 
-func GenerateRouter(basepath string, config domain.Application) (string, string, error) {
-	tmpl, parseErr := template.New("router").Funcs(template.FuncMap{
-		"ToCap": utils.ToCap,
-		"Basepath": func(args ...string) string { return basepath },
-	}).Parse(routerTemplateString)
-	if parseErr != nil {
-		return "", "", parseErr
+func GenerateRouter(basepath string, config domain.Application) error {
+
+	g := services.Generator{
+		Basepath:   basepath,
+		ModulePath: "server",
+		Template:   routerTemplateString,
+		Data:       config,
+		FileName:   "router.go",
 	}
 
-	bs := bytes.NewBufferString("")
-	err := tmpl.Execute(bs, config)
-	if err != nil {
-		return "", "", err
-	}
-	return "server/router.go", bs.String(), nil
+	return g.Generate()
 }
 
-func GenerateCruds(basepath string, config domain.Crud) (string, string, error) {
-	tmpl, parseErr := template.New("crud").Funcs(template.FuncMap{
-		"ToCap": utils.ToCap,
-		"Basepath": func(args ...string) string { return basepath },
-	}).Parse(crudTemplateString)
-	if parseErr != nil {
-		return "", "", parseErr
+func GenerateCruds(basepath string, config domain.Crud) error {
+
+	g := services.Generator{
+		Basepath:   basepath,
+		ModulePath: "server",
+		Template:   crudTemplateString,
+		Data:       config,
+		FileName:   fmt.Sprintf("%s.go", strings.ToLower(config.Name)),
 	}
 
-	bs := bytes.NewBufferString("")
-	err := tmpl.Execute(bs, config)
-	if err != nil {
-		return "", "", err
-	}
-	fileName := fmt.Sprintf("server/%s.go", strings.ToLower(config.Name))
-	return fileName, bs.String(), nil
+	return g.Generate()
 }
 
-func GetAll(basepath string, config domain.Application) (map[string]string, error) {
-	all := make(map[string]string)
+func Generate(basepath string, config domain.Application) (error error) {
 	routerContextConfig := config.Router
-	configPath, configContent, err := GenerateRouter(basepath, config)
+	err := GenerateRouter(basepath, config)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	all[configPath] = configContent
 
 	subConfigs := routerContextConfig.Cruds
 	for _, subconfig := range subConfigs {
-		sConfigPath, sConfigContent, sErr := GenerateCruds(basepath, subconfig)
+		sErr := GenerateCruds(basepath, subconfig)
 		if sErr != nil {
-			return nil, sErr
+			error = sErr
 		}
-		all[sConfigPath] = sConfigContent
 	}
 
-	return all, nil
+	return
 }

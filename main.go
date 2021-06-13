@@ -19,33 +19,25 @@ func main() {
 		Version: "0.0.1",
 		Commands: []*cli.Command{
 			{
-				Name:        "create",
-				Category:    "create",
-				Description: "create",
-				Subcommands: []*cli.Command{
-					{
-						Name:  "project",
-						Usage: "add a project in current directory",
-						Action: func(c *cli.Context) error {
-							if c.NArg() < 1 {
-								return errors.New("please provide project name")
-							}
-							fmt.Println(c.Args().Get(0))
-							wd, err := os.Getwd()
-							if err != nil {
-								return err
-							}
-
-							create.Project(wd, c.Args().Get(0))
-							return nil
-						},
-					},
+				Name:        "new",
+				Category:    "New",
+				Description: "Create new application in GOPATH workspace",
+				Before: func(context *cli.Context) error {
+					if context.NArg() < 1 {
+						return errors.New("please provide project name")
+					}
+					return nil
+				},
+				Action: func(context *cli.Context) error {
+					wd, _ := os.Getwd()
+					log.Println("make sure working directory is part of GOPATH")
+					return create.Project(wd, context.Args().Get(0))
 				},
 			},
 			{
-				Name:        "generate",
-				Category:    "generate",
-				Description: "generate project files from meta file",
+				Name:        "regenerate",
+				Category:    "regenerate",
+				Description: "regenerate project files from meta file",
 				Before: func(context *cli.Context) error {
 					_, e := ioutil.ReadFile("./project.json")
 					if e != nil {
@@ -62,9 +54,9 @@ func main() {
 				},
 			},
 			{
-				Name:        "add",
-				Category:    "add",
-				Description: "add",
+				Name:        "generate",
+				Category:    "generate",
+				Description: "generate",
 				Subcommands: []*cli.Command{
 					{
 						Name:  "model",
@@ -92,7 +84,11 @@ func main() {
 								params[tailArgs[i]] = tailArgs[i+1]
 							}
 							//return create.Model("./",)
-							return create.Model("./", c.Args().Get(0), params)
+							err := add.Model("./", c.Args().Get(0), params)
+							if err != nil {
+								return err
+							}
+							return generate.All("./", "models", "appcontext", "configs")
 						},
 					},
 					{
@@ -109,7 +105,11 @@ func main() {
 							return nil
 						},
 						Action: func(c *cli.Context) error {
-							return add.CRUD("./", c.Args().Get(0))
+							err := add.CRUD("./", c.Args().Get(0))
+							if err != nil {
+								return err
+							}
+							return generate.All("./", "router", "controllers", "models")
 						},
 					},
 					{
@@ -127,7 +127,11 @@ func main() {
 						},
 						Action: func(c *cli.Context) error {
 							//return create.Model("./",)
-							return add.Controller("./", c.Args().Get(0))
+							err := add.Controller("./", c.Args().Get(0))
+							if err != nil {
+								return err
+							}
+							return generate.All("./", "controllers", "models")
 						},
 					},
 					{
@@ -147,7 +151,11 @@ func main() {
 							return nil
 						},
 						Action: func(c *cli.Context) error {
-							return add.AuthController("./")
+							err := add.AuthController("./")
+							if err != nil {
+								return err
+							}
+							return generate.All("./", "controllers")
 						},
 					},
 					{
@@ -161,7 +169,11 @@ func main() {
 						},
 						Action: func(c *cli.Context) error {
 							//return create.Model("./",)
-							return add.AppContext("./", c.Args().Get(0), c.Args().Get(1))
+							err := add.AppContext("./", c.Args().Get(0), c.Args().Get(1))
+							if err != nil {
+								return err
+							}
+							return generate.All("./", "appcontext")
 						},
 					},
 					{
@@ -184,7 +196,11 @@ func main() {
 								params[tailArgs[i]] = tailArgs[i+1]
 							}
 							//return create.Model("./",)
-							return add.Config("./", c.Args().Get(0), params)
+							err := add.Config("./", c.Args().Get(0), params)
+							if err != nil {
+								return err
+							}
+							return generate.All("./", "configs")
 						},
 					},
 				},

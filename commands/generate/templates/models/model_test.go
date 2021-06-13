@@ -30,7 +30,7 @@ func TestGenerateModels(t *testing.T) {
 	var configs map[string]interface{}
 	json.Unmarshal([]byte(jsonString), &configs)
 
-	fileList, err := GenerateModels("github.com/gogen", configs)
+	fileList, err := Generate("github.com/gogen", configs)
 	assert.Nil(t, err)
 	assert.NotNil(t, fileList)
 	user,found := fileList["models/user.go"]

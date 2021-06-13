@@ -2,14 +2,14 @@ package main
 
 import (
 	"github.com/urfave/cli"
-	"{{- Basepath -}}/appcontext"
-	"{{- Basepath -}}/config"
+	"{{- Basepath "" -}}/appcontext"
+	"{{- Basepath "" -}}/config"
 {{ if .AppContext.HasDB }}
-	"{{- Basepath -}}/models"
+	"{{- Basepath "" -}}/models"
 {{ end }}
 	"log"
 	"os"
-	"{{- Basepath -}}/server"
+	"{{- Basepath "" -}}/server"
 )
 
 

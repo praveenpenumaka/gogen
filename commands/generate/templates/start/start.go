@@ -1,11 +1,9 @@
 package start
 
 import (
-	"bytes"
 	_ "embed"
 	"github.com/gogen/domain"
-	"github.com/gogen/utils"
-	"html/template"
+	"github.com/gogen/services"
 )
 
 var (
@@ -13,21 +11,13 @@ var (
 	mainTemplateString string
 )
 
-func GenerateMain(basepath string, config domain.Application) (map[string]string, error) {
-	all := make(map[string]string)
-
-	tmpl, tmplError := template.New("mainfile").Funcs(template.FuncMap{
-		"ToCap": utils.ToCap,
-		"Basepath": func(args ...string) string { return basepath },
-	}).Parse(mainTemplateString)
-	if tmplError != nil {
-		return nil, tmplError
+func Generate(basepath string, config domain.Application) error {
+	g := services.Generator{
+		Basepath:   basepath,
+		ModulePath: "",
+		Template:   mainTemplateString,
+		Data:       config,
+		FileName:   "main.go",
 	}
-
-	// TODO: Handle this case
-	output := bytes.NewBufferString("")
-	tmpl.Execute(output, config)
-
-	all["main.go"] = output.String()
-	return all, nil
+	return g.Generate()
 }

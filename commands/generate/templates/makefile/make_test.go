@@ -32,7 +32,7 @@ func TestGenerateMakefile(t *testing.T) {
 	var configs map[string]interface{}
 	json.Unmarshal([]byte(jsonString), &configs)
 
-	all, err := GenerateMakefile("github.com/gogen", configs)
+	all, err := Generate("github.com/gogen", configs)
 	assert.Nil(t, err)
 	if generated,found := all["Makefile"];found {
 		assert.True(t, found)

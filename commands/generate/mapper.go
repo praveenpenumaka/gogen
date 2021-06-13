@@ -7,32 +7,22 @@ import (
 	"github.com/gogen/commands/generate/templates/env"
 	"github.com/gogen/commands/generate/templates/makefile"
 	"github.com/gogen/commands/generate/templates/models"
+	"github.com/gogen/commands/generate/templates/project"
 	"github.com/gogen/commands/generate/templates/router"
 	"github.com/gogen/commands/generate/templates/start"
 	"github.com/gogen/domain"
 )
 
-func GetAllComponents() []string {
-	return []string {
-		"models",
-		"appcontext",
-		"config",
-		"controllers",
-		"makefile",
-		"server",
-		"main",
-		".env.sample",
-	}
-}
-func GetMapper() map[string]func(basepath string, config domain.Application) (map[string]string,error) {
-	mapper := make(map[string]func(basepath string, config domain.Application) (map[string]string,error))
-	mapper["models"] = models.GenerateModels
-	mapper["appcontext"] = appcontext.GetAll
-	mapper["config"] = config.GetAll
-	mapper["controllers"] = controllers.GetAll
-	mapper["makefile"] = makefile.GenerateMakefile
-	mapper["server"] = router.GetAll
-	mapper["main"] = start.GenerateMain
-	mapper[".env.sample"] = env.GetEnv
+func GetMapper() map[string]func(basepath string, config domain.Application) (error error) {
+	mapper := make(map[string]func(basepath string, config domain.Application) (error error))
+	mapper["project"] = project.Generate
+	mapper["models"] = models.Generate
+	mapper["appcontext"] = appcontext.Generate
+	mapper["configs"] = config.Generate
+	mapper["controllers"] = controllers.Generate
+	mapper["makefile"] = makefile.Generate
+	mapper["router"] = router.Generate
+	mapper["main"] = start.Generate
+	mapper[".env.sample"] = env.Generate
 	return mapper
 }

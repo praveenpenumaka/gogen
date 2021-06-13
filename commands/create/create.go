@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gogen/domain"
 	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 	"text/template"
@@ -40,14 +41,12 @@ func Project(basePath, name string) error {
 	bs := bytes.NewBufferString("")
 	m := make(map[string]string)
 	m["Name"] = name
-	goPath := os.Getenv("GOPATH")+"/src/"
-	spl := strings.Split(finalPath,goPath)
-	m["BasePath"] = strings.TrimSpace(spl[1])
+	m["BasePath"] = strings.TrimSpace(name)
 	err := tmpl.Execute(bs, m)
 	if err != nil {
 		return nil
 	}
-	fmt.Println("Creating meta file at :" + projectMeta)
+	log.Println("Creating meta file at :" + projectMeta)
 	return ioutil.WriteFile(projectMeta, bs.Bytes(), 0755)
 }
 
@@ -110,15 +109,15 @@ func CRUD(basePath, model string) error {
 	return writeProjectConfig(basePath, m)
 }
 
-func AppContext(basepath, name, ntype string) error  {
+func AppContext(basepath, name, ntype string) error {
 	m, err := getProjectConfig(basepath)
 	if err != nil {
 		return err
 	}
 
 	c := domain.Context{
-		Name:name,
-		Type:ntype,
+		Name: name,
+		Type: ntype,
 	}
 	m.AddContext(&c)
 

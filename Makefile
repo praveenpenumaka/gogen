@@ -5,5 +5,5 @@ clean:
 build:
 	go build -o out/gogen
 
-install: build
+install:
 	go install

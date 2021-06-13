@@ -26,7 +26,7 @@ func TestGenerateMain(t *testing.T) {
 	configs := make(map[string]interface{})
 	err := json.Unmarshal([]byte(jsonString), &configs)
 
-	files, err := GenerateMain("github.com/somename", configs)
+	files, err := Generate("github.com/somename", configs)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(files))
 	mainfile, found := files["main.go"]

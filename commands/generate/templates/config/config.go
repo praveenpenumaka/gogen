@@ -1,13 +1,11 @@
 package config
 
 import (
-	"bytes"
 	_ "embed"
 	"fmt"
 	"github.com/gogen/domain"
-	"github.com/gogen/utils"
+	"github.com/gogen/services"
 	"strings"
-	"text/template"
 )
 
 var (
@@ -17,60 +15,44 @@ var (
 	subConfigTemplateString string
 )
 
-func GenerateConfig(basepath string, config domain.Application) (string, string, error) {
+func GenerateConfig(basepath string, config domain.Application) error {
 
-	tmpl, parseErr := template.New("config").Funcs(template.FuncMap{
-		"ToCap":    utils.ToCap,
-		"Basepath": func(arg0 string, args ...string) string { return basepath },
-	}).Parse(configTemplateString)
-	if parseErr != nil {
-		return "", "", parseErr
+	g := services.Generator{
+		Basepath:   basepath,
+		ModulePath: "config",
+		Template:   configTemplateString,
+		Data:       config,
+		FileName:   "config.go",
 	}
-
-	bs := bytes.NewBufferString("")
-	err := tmpl.Execute(bs, config)
-	if err != nil {
-		return "", "", err
-	}
-	return "config/config.go", bs.String(), nil
+	return g.Generate()
 }
 
-func GenerateSubconfig(basepath string, config domain.Config) (string, string, error) {
-	tmpl, parseErr := template.New("subconfig").Funcs(template.FuncMap{
-		"ToCap":       utils.ToCap,
-		"ToUpperCase": strings.ToUpper,
-		"Basepath":    func(arg0 string, args ...string) string { return basepath },
-	}).Parse(subConfigTemplateString)
-	if parseErr != nil {
-		return "", "", parseErr
+func GenerateSubconfig(basepath string, config domain.Config) error {
+	g := services.Generator{
+		Basepath:   basepath,
+		ModulePath: "config",
+		Template:   subConfigTemplateString,
+		Data:       config,
+		FileName:   fmt.Sprintf("%s.go", strings.ToLower(config.Name)),
 	}
 
-	bs := bytes.NewBufferString("")
-	err := tmpl.Execute(bs, config)
-	if err != nil {
-		return "", "", err
-	}
-	fileName := fmt.Sprintf("config/%s.go", config.Name)
-	return fileName, bs.String(), nil
+	return g.Generate()
 }
 
-func GetAll(basepath string, config domain.Application) (map[string]string, error) {
-	all := make(map[string]string)
+func Generate(basepath string, config domain.Application) (error error) {
 
-	configPath, configContent, err := GenerateConfig(basepath, config)
+	err := GenerateConfig(basepath, config)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	all[configPath] = configContent
 
 	subConfigs := config.Configs
 	for _, subconfig := range subConfigs {
-		sConfigPath, sConfigContent, sErr := GenerateSubconfig(basepath, subconfig)
+		sErr := GenerateSubconfig(basepath, subconfig)
 		if sErr != nil {
-			return nil, sErr
+			error = sErr
 		}
-		all[sConfigPath] = sConfigContent
 	}
 
-	return all, nil
+	return
 }
